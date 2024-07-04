@@ -1,0 +1,169 @@
+6. AWS LAMBDA:
+1. go to S3 service
+ -> create bucket
+ -> name the bucket[sample],ACLs permissions enable, uncheck Block all public access chechbox, checkmark on i acknowledge,  remaining all default
+ -> click on create bucket
+2.go to DynamoDB service
+ -> create table
+ -> give name[employees], give partition key i.e ur primary key[emp_id], remaining all default 
+ -> click on create table
+3.go to Lambda service
+  -> create function
+  -> name ur function[sampleFunction], select runtime[Python 3.8],
+  -> under change default executionrole -> select use an existing role, existing role->LabRole, remaining all default 
+ -> click on create function
+4.paste ur code in Code source section.
+import boto3
+import json
+s3 = boto3.client("s3")
+dynamodb = boto3.resource('dynamodb')
+def lambda_handler(event,context):
+    bucket=event['Records'][0]['s3']['bucket']['name']
+    json_file_name=event['Records'][0]['s3']['object']['key']
+    json_object=s3_client.get_object(Bucket=bucket,key=json_file_name)
+    jsonFileReader==json_object['Body'].read()
+    jsonDict=json.loads(jsonFileReader)
+    table=dynamodb.Table('employees')
+    table.put_item(Item=jsonDict)
+5.click on Deploy once the code is written
+6.Succesfully ur function has been created
+7.click on Test->give Event name as test->click on save
+8.click on Add Trigger-> select source as S3, choose bucket[sample],checkmark on i acknowledge -> click on Add
+8.open s3 service and dynamodb service in a 2 new seperate tabs
+9.go to dynamodb->go to Tables from left panel->click on employee->click on Explore Items from left panel[presently there are no items]
+10.go to s3->open ur bucket[sample]->click on upload->click on Add Files->select a json file that has json data as and click on upload
+{
+"emp_id" : "123",
+"Name" : "Bob",
+"Age" : "21"
+}
+11.as soon as it upload go to dynamodb page and refresh it, uh can see the data in the items returned section
+___________________________________________________________________________8.DOCKER: Migrate a website from local server to Cloud
+ STEPS:
+1.open EC2 service
+  -> launch instance
+  -> name[DOCKER_DEMO]
+  -> select OS as Ubuntu
+  -> instance type as t2.large
+  -> create key pair, name it as Docker_Demo
+  -> Network settings: Edit-> Auto-assign public IP: enable, 
+                       Add Security group: type:all traffic,source:anywhere
+  -> Storage: 30GiB
+  -> click on launch instance
+2. select the instance created, 
+   -> click on Connect
+   -> under SSH client, copy the link
+   -> open command promt from the location where ur keypair is downloaded
+   -> here paste that command[ssh link] and run[it asks for authentication in b/w enter yes]
+   -> run the commands: 
+      git clone https://github.com/procareer3fwd/realgrandebackend.git
+      git clone https://github.com/procareer3fwd/realgrandefrontend.git
+      ls[uh will find realgrandebackend and realgrandefrontend]
+      sudo apt update [update ur ubuntu]
+      sudo apt -y install docker.io   [install dockers]
+      sudo docker version [verify docker installed]
+      sudo docker images  [check for docker images]
+      cd realgrandebackend/  [go to ur backend directory]
+      nano .env  [paste below code in this file]
+  MONGODBURL="mongodb+src://fsd04.2hxrdca.mongodb.net/realgrande?retryWrites=true&w=majority"
+  DBUSERNAME=procareer3
+  DBPASSWORD=ISobjBDohsFqEAqg
+  FRONTENDURI="http://3.82.156.186"[in the place of (3.82.156.186)this paste ur instance public ip]
+      ctrl+X, hit Y and hit enter [to save and quit]
+      ls [uh will fine Dockerfile]
+      cat Dockerfile [output of it is below]
+  FROM node
+  WORKDIR /app
+  COPY . /app
+  RUN npm install
+  EXPOSE 5000
+  CMD ["npm","start"]
+      sudo docker build -t backend .   [built a image named backend] 
+      sudo docker run -d -p 2001:5000 backend [to run the image in container]
+      sudo docker ps  [to check its running in container]    
+      3.82.156.186:2001/api  [publicIP:portno/api] check if we can connect to backend with the browser
+ Now redirect to frontend
+      cd
+      cd realgrandefrontend/
+      nano .env [paste below code int it]
+  REACT_APP_BACKEND_URL="http://3.82.156.186:2001/api" [in the place of (3.82.156.186)this paste ur instance public ip]
+      ctrl+X, hit Y and hit enter [to save and quit]
+      ls [uh will fine Dockerfile]
+      cat Dockerfile [output of it is below]
+  FROM node
+  WORKDIR /app
+  COPY . /app
+  RUN npm install
+  EXPOSE 3000
+  CMD ["npm","start"]
+      sudo docker build -t frontend . [built a image named frontend] 
+      sudo docker run -d -p 80:3000 frontend  [to run the image in container]
+      3.82.156.186  [publicIP] as 80 is default portno need not mention it
+
+___________________________________________________________________________
+9. DYNAMODB: Launch a NoSQL database using Amazon DynamoDB.
+
+1.go to dynamodb service
+  -> click on create table
+  -> give name[Students]
+  -> enter partition key[Stu_ID]
+  -> click on create table
+  -> click on table uh created[Students]
+  -> click on Actions -> create item
+  -> enter the student id value
+if uh want to add more attributes
+  -> click on Add new attributes-> select datatype and enter the colname and value
+  -> click on create item
+to view all items
+  -> click on "Scan and query items" -> click on Run
+to update date of items
+  -> select the item->Actions->Edit item->change the value->save and close
+to delete the item
+  -> select the item->Actions->Delete item->Delete
+___________________________________________________________________________
+10.SQS[SIMPLE QUEUE SERVICE]
+
+1. open SQS service
+  -> click on create queue
+  -> select FIFO
+  -> name the queue[Demo_fifo]
+  -> select Content-based duplication
+  -> check message group and per message group option
+  -> remaining all keep default 
+  -> click create queue
+  -> click on Send and receive message
+  -> enter the message and message groupId and click on send message
+  -> in receive messages section click on Poll for messages
+  -> we can see received message, and check for specifications[we can find its ID]
+  -> now again send message and u can see message received with same Id
+  -> now edit msg and keep its ID same and send it
+  -> we will find msg received with new ID after polling
+___________________________________________________________________________
+11.SNS[SIMPLE NOTIFICATION SERVICE]
+
+1.open SNS service
+  -> click on create topic
+  -> enter topic name and display name and click on create topic
+  -> click on create description
+  -> select protocol[Email-JSON] and enter email address and click on create subscription 
+  -> uh will receive verification mail, click on url to confirm
+  -> come back to AWS, click on topic uh have created
+  -> click on publish message
+  -> enter subject[simple_mail] and msg[welcome] and click on publish messsage
+  -> uh will receive mail that data is published
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
